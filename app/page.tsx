@@ -2,18 +2,27 @@
 
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChartAreaInteractive } from "@/components/interactive-area-chart";
 
 export default function Home() {
   const { setTheme } = useTheme();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans">
-      <button onClick={() => setTheme("light")}>
-        <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-      </button>
-      <button onClick={() => setTheme("dark")}>
-        <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-      </button>
+    <div className="min-h-screen bg-background">
+      <nav className="flex flex-row justify-center gap-4 my-8">
+        <Button variant="outline" onClick={() => setTheme("light")}>
+          <Sun className="h-4 w-4" />
+          Light
+        </Button>
+        <Button variant="outline" onClick={() => setTheme("dark")}>
+          <Moon className="mr-2 h-4 w-4" />
+          Dark
+        </Button>
+      </nav>
+      <main className="container mx-auto">
+        <ChartAreaInteractive />
+      </main>
     </div>
   );
 }
