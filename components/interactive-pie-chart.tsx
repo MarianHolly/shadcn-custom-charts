@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Label, Pie, PieChart, Sector } from "recharts";
 import { PieSectorDataItem } from "recharts/types/polar/Pie";
+import { motion } from "framer-motion";
 
 import {
   Card,
@@ -68,6 +69,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const AnimatedValue = ({ value }: { value: number }) => {
+  const [displayValue, setDisplayValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setDisplayValue(value);
+  }, [value]);
+
+  return (
+    <motion.span
+      key={value}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {displayValue.toLocaleString()}
+    </motion.span>
+  );
+};
+
 export function ChartPieInteractive() {
   const id = "pie-interactive";
   const [activeMonth, setActiveMonth] = React.useState(desktopData[0].month);
@@ -123,6 +144,14 @@ export function ChartPieInteractive() {
         </Select>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center pb-0">
+
+        <motion.div
+          key={`chart-${activeIndex}`}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full"
+        > 
         <ChartContainer
           id={id}
           config={chartConfig}
@@ -169,8 +198,8 @@ export function ChartPieInteractive() {
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {desktopData[activeIndex].desktop.toLocaleString()}
-                        </tspan>
+<AnimatedValue value={desktopData[activeIndex].desktop} />                   
+     </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
@@ -185,7 +214,7 @@ export function ChartPieInteractive() {
               />
             </Pie>
           </PieChart>
-        </ChartContainer>
+        </ChartContainer></motion.div>
       </CardContent>
     </Card>
   );
