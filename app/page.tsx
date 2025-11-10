@@ -1,36 +1,78 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { HeroSection } from "@/components/landing/hero-section";
+import { AboutSection } from "@/components/landing/about-section";
+import { StepsSection } from "@/components/landing/steps-section";
+import { UploadModal } from "@/components/landing/upload-modal";
+import { useUploadStore } from "@/hooks/use-upload-store";
+import { parseCSV, getFileType, validateCSV } from "@/lib/csv-parser";
 
-import { ChartAreaInteractive } from "@/components/interactive-area-chart";
-import { ChartPieInteractive } from "@/components/interactive-pie-chart";
+interface UploadedFile {
+  file: File;
+  type: "watched" | "ratings" | "diary" | "unknown";
+  status: "uploading" | "success" | "error";
+  progress: number;
+  error?: string;
+}
 
 export default function Home() {
-  const { setTheme } = useTheme();
+  const router = useRouter();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const addFile = useUploadStore((state) => state.addFile);
+
+  const handleUploadComplete = async (files: UploadedFile[]) => {
+    try {
+      // Process and store uploaded files
+      for (const file of files) {
+        if (file.status === "success" && file.type !== "unknown") {
+          const fileType = getFileType(file.file.name);
+          const csvContent = await file.file.text();
+
+          // Parse CSV to validate structure
+          const parsed = await parseCSV(file.file);
+          const validation = validateCSV(fileType, parsed);
+
+          if (validation.valid) {
+            // Store file in zustand state
+            addFile({
+              id: `${Date.now()}_${Math.random()}`,
+              name: file.file.name,
+              size: file.file.size,
+              type: fileType,
+              data: csvContent,
+              uploadedAt: Date.now(),
+            });
+          }
+        }
+      }
+
+      // Navigate to dashboard
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error processing files:", error);
+      alert("Error processing files. Please try again.");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background mb-24">
-      <nav className="flex flex-row justify-center gap-4 my-8">
-        <Button variant="outline" onClick={() => setTheme("light")}>
-          <Sun className="h-4 w-4" />
-          Light
-        </Button>
-        <Button variant="outline" onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          Dark
-        </Button>
-      </nav>
-      <main className="container mx-auto">
-        <ChartAreaInteractive />
-      </main>
-      <Separator className="my-8" />
+    <main className="w-full">
+      {/* Hero Section */}
+      <HeroSection onUploadClick={() => setIsUploadModalOpen(true)} />
 
-      <div className="container mx-auto">
-        <ChartPieInteractive />
-      </div>
-    </div>
+      {/* About Section */}
+      <AboutSection />
+
+      {/* Steps Section */}
+      <StepsSection />
+
+      {/* Upload Modal */}
+      <UploadModal
+        open={isUploadModalOpen}
+        onOpenChange={setIsUploadModalOpen}
+        onUploadComplete={handleUploadComplete}
+      />
+    </main>
   );
 }
